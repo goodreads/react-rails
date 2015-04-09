@@ -25,17 +25,24 @@ module React
 
     def self.render(component, args={})
       unless React::JavascriptContext.current.renderer
-        React::JavascriptContext.current.renderer = @@pool.checkout
+        duration = Benchmark.ms do
+          React::JavascriptContext.current.renderer = @@pool.checkout
+        end
+        ::Rails.logger.info "[React-SSR]: @@pool.checkout took #{duration}ms"
       end
       React::JavascriptContext.current.renderer.render(component, args)
     end
 
     def self.reset!
-      if renderer = React::JavascriptContext.current.renderer
-        React::JavascriptContext.reset!
-        renderer.reload_context!
-        @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
+      renderer = nil
+      duration = Benchmark.ms do
+        if renderer = React::JavascriptContext.current.renderer
+          React::JavascriptContext.reset!
+          renderer.reload_context!
+          @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
+        end
       end
+      ::Rails.logger.info "[React-SSR]: #{renderer}.reset! took #{duration}ms"
     end
 
     def self.react_props(args={})
@@ -47,7 +54,10 @@ module React
     end
 
     def reload_context!
-      @context = ExecJS.compile(self.class.combined_js)
+      duration = Benchmark.ms do
+        @context = ExecJS.compile(self.class.combined_js)
+      end
+      ::Rails.logger.info "[React-SSR]: ExecJS compile took #{duration}ms"
     end
 
     def context
@@ -63,8 +73,12 @@ module React
           return React.renderToString(React.createElement(#{component}, #{react_props}));
         }()
       JS
-
-      context.eval(jscode).html_safe
+      output = nil
+      duration = Benchmark.ms do
+        output = context.eval(jscode).html_safe
+      end
+      ::Rails.logger.info "[React-SSR]: context.eval(jscode) took #{duration}ms"
+      output
     rescue ExecJS::ProgramError => e
       raise PrerenderError.new(component, react_props, e)
     end
