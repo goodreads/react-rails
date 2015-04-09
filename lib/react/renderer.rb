@@ -1,4 +1,5 @@
 require 'connection_pool'
+require_relative 'javascript_context'
 
 module React
   class Renderer
@@ -23,8 +24,17 @@ module React
     end
 
     def self.render(component, args={})
-      @@pool.with do |renderer|
-        renderer.render(component, args)
+      unless React::JavascriptContext.current.renderer
+        React::JavascriptContext.current.renderer = @@pool.checkout
+      end
+      React::JavascriptContext.current.renderer.render(component, args)
+    end
+
+    def self.reset!
+      if renderer = React::JavascriptContext.current.renderer
+        React::JavascriptContext.reset!
+        renderer.reload_context!
+        @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
       end
     end
 
@@ -36,17 +46,24 @@ module React
       end
     end
 
+    def reload_context!
+      @context = ExecJS.compile(self.class.combined_js)
+    end
+
     def context
-      @context ||= ExecJS.compile(self.class.combined_js)
+      reload_context! unless @context
+      @context
     end
 
     def render(component, args={})
       react_props = React::Renderer.react_props(args)
       jscode = <<-JS
         function() {
+          #{React::JavascriptContext.current.pop_all}
           return React.renderToString(React.createElement(#{component}, #{react_props}));
         }()
       JS
+
       context.eval(jscode).html_safe
     rescue ExecJS::ProgramError => e
       raise PrerenderError.new(component, react_props, e)

@@ -1,4 +1,5 @@
 require 'rails'
+require_relative 'controller_filters'
 
 module React
   module Rails
@@ -25,6 +26,12 @@ module React
         React::JSX.transform_options = app.config.react.jsx_transform_options
         ActiveSupport.on_load(:action_view) do
           include ::React::Rails::ViewHelper
+        end
+      end
+
+      initializer "react_rails.setup_controller_filters" do |app|
+        ActiveSupport.on_load(:action_controller) do
+          include ::React::Rails::ControllerFilters
         end
       end
 

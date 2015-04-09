@@ -1,6 +1,14 @@
+require_relative '../javascript_context'
+
 module React
   module Rails
     module ViewHelper
+
+      def react_javascript(&block)
+        script_contents = capture(&block)
+        ::React::JavascriptContext.current.push(script_contents)
+        content_tag(:script, script_contents, type: 'text/javascript')
+      end
 
       # Render a UJS-type HTML tag annotated with data attributes, which
       # are used by react_ujs to actually instantiate the React component
