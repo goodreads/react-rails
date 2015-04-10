@@ -105,7 +105,7 @@ To use `react_ujs`, simply `require` it after `react` (and after `turbolinks` if
 //= require react_ujs
 ```
 
-### View helper
+### Component View Helper
 
 There is a view helper method `react_component`. It is designed to work with `react_ujs` and takes a React class name, properties, and HTML options as arguments:
 
@@ -179,6 +179,20 @@ Which will generate:
 {"messages":[{"id":1,"name":"hello","url":"http://localhost:3000/messages/1.json"},{"id":2,"name":"hello","url":"http://localhost:3000/messages/2.json"},{"id":3,"name":"hello","url":"http://localhost:3000/messages/3.json"}]}
 ```
 
+### Page-specific Javascript View Helper
+
+A common pattern when using architectures like Flux is to seed stores with data from Rails.
+
+You can use the `react_javascript` helper to achieve this.
+
+```ruby
+<%= react_javascript do %>
+  MyStore.seedWith(<%= raw(@rails_data.to_json) %>);
+<% end %>
+```
+
+This will be available in both client and server-side rendering.
+
 ### Server Rendering
 
 React components can also use the same ExecJS mechanisms in Sprockets to execute JavaScript code on the server, and render React components to HTML to be delivered to the browser, and then the `react_ujs` script will cause the component to be mounted. In this way, users get fast initial page loads and search-engine-friendly pages.
@@ -222,7 +236,7 @@ This will return the fully rendered component markup, and as long as you have in
 
 ### Component Generator
 
-react-rails ships with a Rails generator to help you get started with a simple component scaffold. You can run it using `rails generate react:component ComponentName`. The generator takes an optional list of arguments for default propTypes, which follow the conventions set in the [Reusable Components](http://facebook.github.io/react/docs/reusable-components.html) section of the React documentation. 
+react-rails ships with a Rails generator to help you get started with a simple component scaffold. You can run it using `rails generate react:component ComponentName`. The generator takes an optional list of arguments for default propTypes, which follow the conventions set in the [Reusable Components](http://facebook.github.io/react/docs/reusable-components.html) section of the React documentation.
 
 For example:
 
