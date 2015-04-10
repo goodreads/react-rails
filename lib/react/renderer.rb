@@ -38,8 +38,10 @@ module React
       duration = Benchmark.ms do
         if renderer = React::JavascriptContext.current.renderer
           React::JavascriptContext.reset!
-          renderer.reload_context!
-          @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
+          Thread.new do
+            renderer.reload_context!
+            @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
+          end
         end
       end
       ::Rails.logger.info "[React-SSR]: #{renderer}.reset! took #{duration}ms" if duration > 1.0
