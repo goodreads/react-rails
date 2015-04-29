@@ -169,6 +169,21 @@ MyApp::Application.configure do
 end
 ```
 
+#### Page-specific Javascript View Helper
+
+A common pattern when using architectures like Flux is to seed stores with data from Rails.
+
+You can use the `react_javascript` helper to achieve this.
+
+```ruby
+<%= react_javascript do %>
+  MyStore.seedWith(<%= raw(@rails_data.to_json) %>);
+<% end %>
+```
+
+This will be available in both client and server-side rendering.
+
+
 ### Component generator
 
 react-rails ships with a Rails generator to help you get started with a simple component scaffold. You can run it using `rails generate react:component ComponentName`. The generator takes an optional list of arguments for default propTypes, which follow the conventions set in the [Reusable Components](http://facebook.github.io/react/docs/reusable-components.html) section of the React documentation.

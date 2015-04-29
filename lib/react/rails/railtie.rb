@@ -1,4 +1,5 @@
 require 'rails'
+require_relative 'controller_filters'
 
 module React
   module Rails
@@ -28,6 +29,14 @@ module React
         end
       end
 
+      initializer "react_rails.setup_controller_filters" do |app|
+        ActiveSupport.on_load(:action_controller) do
+          include ::React::Rails::ControllerFilters
+        end
+      end
+
+      # run after all initializers to allow sprockets to pick up react.js and
+      # jsxtransformer.js from end-user to override ours if needed
       initializer "react_rails.setup_vendor", group: :all do |app|
         # Mimic behavior of ember-rails...
         # We want to include different files in dev/prod. The unminified builds
