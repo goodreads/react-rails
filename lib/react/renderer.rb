@@ -65,6 +65,10 @@ module React
     end
 
     def context
+      if ::Rails.env.development?
+        self.class.reset_combined_js!
+        reload_context!
+      end
       reload_context! unless @context
       @context
     end
