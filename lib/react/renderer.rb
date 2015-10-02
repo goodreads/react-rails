@@ -66,7 +66,11 @@ module React
 
     def context
       if ::Rails.env.development?
-        self.class.reset_combined_js!
+        self.class.reset_combined_js!.tap do |concatenated_js|
+          File.open(::Rails.root.join('tmp', 'ssr-react.js'), 'w') do |file|
+            file.write concatenated_js
+          end
+        end
         reload_context!
       end
       reload_context! unless @context
