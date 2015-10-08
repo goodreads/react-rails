@@ -19,3 +19,9 @@
 //= require react_ujs
 //= require_tree ./components
 //= require ./pages
+
+// Stub a store in a way that we can test if it was called
+ReactStores = {};
+ReactStores.fooStore = {
+  updateWith: function() { document.body.appendChild(document.createElement('nav')); }
+};

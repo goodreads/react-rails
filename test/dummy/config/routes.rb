@@ -1,5 +1,6 @@
 Dummy::Application.routes.draw do
   resources :pages, only: [:show]
+  resources :storepages, only: [:show]
   resources :server, only: [:show] do
     collection do
       get :console_example

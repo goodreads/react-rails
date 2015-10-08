@@ -138,4 +138,9 @@ class ViewHelperTest < ActionDispatch::IntegrationTest
     assert_no_match(/tag=/, page.html)
     assert_no_match(/prerender=/, page.html)
   end
+
+  test 'react server renders component and store from helper' do
+    visit '/storepages/1'
+    assert_match(/<nav>/, page.html)
+  end
 end
