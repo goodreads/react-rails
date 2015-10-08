@@ -31,19 +31,32 @@ module React
         content_tag(html_tag, '', html_options, &block)
       end
 
+      # At the same time as rendering a react component, initialize data
+      # in one or more stores. This is to be used in views that can return
+      # not-yet-rendered React Components from the server via AJAX.
+      # Since the process to mount React components only runs on page load,
+      # any components loaded after that must be mounted manually.
       def react_component_and_stores(name, args = {}, options = {}, stores = [], &block)
-        react_store_javascript = ''.html_safe
+        javascript_for_updating_stores = ''.html_safe
         randId = "i#{rand(100000000)}"
         options[:id] = randId
         stores.each do |store|
-          react_store_javascript <<
+          javascript_for_updating_stores <<
             "ReactStores.#{store[:storeName]}.updateWith(#{store[:updateData].to_json});".html_safe
         end
+        # Whatever we pass into react_javascript must already be html_safed or
+        # else it will be escaped. Wrap in async block.
         script_tag = react_javascript do
-          react_store_javascript + "setTimeout(function() { React.render(React.createElement(eval.call(window, #{name}), #{args.to_json}), document.getElementById('#{randId}')); });".html_safe
+          javascript_for_rendering = <<-END
+            setTimeout(function() {
+              React.render(React.createElement(eval.call(window, #{name}),
+                                               #{args.to_json}),
+                                               document.getElementById('#{randId}'));
+            });
+          END
+          javascript_for_updating_stores + javascript_for_rendering.html_safe
         end
-        final_output = script_tag + react_component(name, args, options, &block)
-        final_output
+        script_tag + react_component(name, args, options, &block)
       end
     end
   end
