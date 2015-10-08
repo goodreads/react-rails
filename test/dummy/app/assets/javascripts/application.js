@@ -19,3 +19,8 @@
 //= require react_ujs
 //= require_tree ./components
 //= require ./pages
+
+ReactStores = {};
+ReactStores.fooStore = {
+  updateWith: function() { document.body.appendChild(document.createElement('nav')); }
+};
