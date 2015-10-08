@@ -18,10 +18,26 @@
 //= require react
 //= require react_ujs
 //= require_tree ./components
+//= require ./store_initializers
 //= require ./pages
 
 // Stub a store in a way that we can test if it was called
-ReactStores = {};
-ReactStores.fooStore = {
-  updateWith: function() { document.body.appendChild(document.createElement('nav')); }
+
+window.onload = function() {
+  urlDiv = document.getElementById('theUrlDiv');
+  if (urlDiv) {
+    (function callAjax(url) {
+      var fixedUrl = url;
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          var scriptTag = document.createElement("script");
+          scriptTag.text = xmlhttp.responseText.split(/<script.*>/)[2].split(/<\/script>/)[0];
+          document.body.appendChild(scriptTag);
+        }
+      }
+      xmlhttp.open("GET", fixedUrl, true);
+      xmlhttp.send();
+    }(urlDiv.innerText));
+  }
 };

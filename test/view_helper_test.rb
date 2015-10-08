@@ -139,8 +139,27 @@ class ViewHelperTest < ActionDispatch::IntegrationTest
     assert_no_match(/prerender=/, page.html)
   end
 
+  test 'react client renders component and store from helper' do
+    visit '/with_store/1'
+    assert page.evaluate_script("fooGlobal") == 5
+  end
+
   test 'react server renders component and store from helper' do
-    visit '/storepages/1'
-    assert_match(/<nav>/, page.html)
+    visit '/server_with_store/1'
+    assert page.evaluate_script("fooGlobal") == 5
+  end
+
+  test 'react ajax client renders component and store from helper' do
+    visit '/with_store/1?ajax=1/show_ajax'
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      assert page.evaluate_script("barGlobal") == 10
+    end
+  end
+
+  test 'react ajax server renders component and store from helper' do
+    visit '/server_with_store/1?ajax=1/show_ajax'
+    Timeout.timeout(Capybara.default_max_wait_time) do
+      assert page.evaluate_script("barGlobal") == 10
+    end
   end
 end

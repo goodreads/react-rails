@@ -36,27 +36,46 @@ module React
       # not-yet-rendered React Components from the server via AJAX.
       # Since the process to mount React components only runs on page load,
       # any components loaded after that must be mounted manually.
-      def react_component_and_stores(name, args = {}, options = {}, stores = [], &block)
+      def react_component_with_stores(component_name:, props: {}, options: {}, storeUpdateCalls: [], &block)
         javascript_for_updating_stores = ''.html_safe
+        render_javascript_tag = ''.html_safe
+        store_javascript_tag = ''.html_safe
         randId = "i#{rand(100000000)}"
-        options[:id] = randId
-        stores.each do |store|
-          javascript_for_updating_stores <<
-            "ReactStores.#{store[:storeName]}.updateWith(#{store[:updateData]});".html_safe
-        end
-        # Whatever we pass into react_javascript must already be html_safed or
-        # else it will be escaped. Wrap in async block.
-        script_tag = react_javascript do
+        options[:id] ||= randId
+
+        # If it's an XHR request, we need to generate javascript to mount
+        # the component when the request is returned to the client.
+        if request.xhr?
           javascript_for_rendering = <<-END
-            setTimeout(function() {
-              React.render(React.createElement(eval.call(window, #{name}),
-                                               #{args.to_json}),
+            React.render(React.createElement(eval.call(window, '#{component_name}'),
+                                               #{props.to_json}),
                                                document.getElementById('#{randId}'));
-            });
           END
-          javascript_for_updating_stores + javascript_for_rendering.html_safe
+
+          if options[:prerender]
+            ::React::JavascriptContext.current.push(javascript_for_rendering.html_safe)
+          else
+            render_javascript_tag = javascript_tag javascript_for_rendering.html_safe
+          end
         end
-        script_tag + react_component(name, args, options, &block)
+
+        # Generate javascript to update stores with data provided
+        storeUpdateCalls = storeUpdateCalls.is_a?(Array) ? storeUpdateCalls : [storeUpdateCalls]
+        javascript_for_updating_stores = storeUpdateCalls.map do |storeUpdateCall|
+          "#{storeUpdateCall}".html_safe
+        end.join
+        if options[:prerender]
+          store_javascript_tag = react_javascript do
+            javascript_for_updating_stores.html_safe
+          end
+        else
+          store_javascript_tag = javascript_tag do
+            javascript_for_updating_stores.html_safe
+          end
+        end
+
+        # Return string with store and rendering JS and component itself
+        "#{store_javascript_tag}\n#{render_javascript_tag}\n#{react_component(component_name, props, options, &block)}".html_safe
       end
     end
   end
