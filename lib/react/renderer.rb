@@ -30,7 +30,6 @@ module React
         duration = Benchmark.ms do
           React::JavascriptContext.current.renderer = @@pool.checkout
         end
-        ::Rails.logger.info "[React-SSR]: @@pool.checkout took #{duration}ms" if duration > 1.0
       end
       React::JavascriptContext.current.renderer.render(component, args)
     end
@@ -46,7 +45,6 @@ module React
           end
         end
       end
-      ::Rails.logger.info "[React-SSR]: #{renderer}.reset! took #{duration}ms" if duration > 1.0
     end
 
     def self.react_props(args={})
