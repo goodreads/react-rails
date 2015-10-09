@@ -40,7 +40,14 @@ module React
         if renderer = React::JavascriptContext.current.renderer
           React::JavascriptContext.reset!
           Thread.new do
-            renderer.reload_context!
+            if ::Rails.env.development?
+              self.reset_combined_js!
+              self.write_combined_js_to_file_for_debugging
+            end
+            duration = Benchmark.ms do
+              renderer.reload_context!
+            end
+            ::Rails.logger.info "[React-SSR]: reloading javascript context took #{duration}ms"
             @@pool.checkin # the pool keeps a stack of checked-out objects per-thread
           end
         end
@@ -56,21 +63,10 @@ module React
     end
 
     def reload_context!
-      duration = Benchmark.ms do
-        @context = ExecJS.compile(self.class.combined_js)
-      end
-      ::Rails.logger.info "[React-SSR]: ExecJS compile took #{duration}ms"
+      @context = ExecJS.compile(self.class.combined_js)
     end
 
     def context
-      if ::Rails.env.development?
-        self.class.reset_combined_js!.tap do |concatenated_js|
-          File.open(::Rails.root.join('tmp', 'ssr-react.js'), 'w') do |file|
-            file.write concatenated_js
-          end
-        end
-        reload_context!
-      end
       reload_context! unless @context
       @context
     end
@@ -89,7 +85,7 @@ module React
       duration = Benchmark.ms do
         output = context.eval(jscode).html_safe
       end
-      ::Rails.logger.info "[React-SSR]: context.eval(jscode) took #{duration}ms"
+      ::Rails.logger.info "[React-SSR]: rendering #{component} took #{duration}ms"
       output
     rescue ExecJS::ProgramError => e
       raise PrerenderError.new(component, react_props, e)
@@ -112,6 +108,12 @@ module React
 
     def self.reset_combined_js!
       @@combined_js = setup_combined_js
+    end
+
+    def self.write_combined_js_to_file_for_debugging
+      File.open(::Rails.root.join('tmp', 'ssr-react.js'), 'w') do |file|
+        file.write @@combined_js
+      end
     end
 
     def self.combined_js
