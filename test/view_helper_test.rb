@@ -23,7 +23,7 @@ class ViewHelperTest < ActionDispatch::IntegrationTest
   end
 
   test 'react_component accepts React props' do
-    html = @helper.react_component('Foo', {bar: 'value'})
+    html = @helper.react_component(component_name: 'Foo', props: {bar: 'value'})
     %w(data-react-class="Foo" data-react-props="{&quot;bar&quot;:&quot;value&quot;}").each do |segment|
       assert html.include?(segment)
     end
@@ -34,16 +34,16 @@ class ViewHelperTest < ActionDispatch::IntegrationTest
       json.bar 'value'
     end.target!
 
-    html = @helper.react_component('Foo', jbuilder_json)
+    html = @helper.react_component(component_name: 'Foo', props: jbuilder_json)
     %w(data-react-class="Foo" data-react-props="{&quot;bar&quot;:&quot;value&quot;}").each do |segment|
       assert html.include?(segment), "expected #{html} to include #{segment}"
     end
   end
 
   test 'react_component accepts HTML options and HTML tag' do
-    assert @helper.react_component('Foo', {}, :span).match(/<span\s.*><\/span>/)
+    assert @helper.react_component(component_name: 'Foo', props: {}, options: { tag: :span } ).match(/<span\s.*><\/span>/)
 
-    html = @helper.react_component('Foo', {}, {:class => 'test', :tag => :span, :data => {:foo => 1}})
+    html = @helper.react_component(component_name: 'Foo', props: {}, options: { class: 'test', tag: :span, data: {foo: 1}})
     assert html.match(/<span\s.*><\/span>/)
     assert html.include?('class="test"')
     assert html.include?('data-foo="1"')
