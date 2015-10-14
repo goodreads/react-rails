@@ -62,7 +62,7 @@ module React
           js_rendering_component = <<-END
             React.render(React.createElement(eval.call(window, "#{component_name}"),
                                                #{props.to_json}),
-                                               document.getElementById("#{randId}"));
+                                               document.getElementById("#{rand_id}"));
           END
 
           if options[:prerender]
