@@ -1,5 +1,5 @@
 <div id='test-component2'>
-  <%= react_component component_name: 'TodoList',
-                      props: { todos: @todos },
-                      store_update_calls: "ReactStores.barStore.updateWith(#{{a: 123}.to_json});".html_safe %>
+  <%= react_component 'TodoList',
+                      { todos: @todos },
+                      { store_init_js: "ReactStores.barStore.updateWith(#{{a: 123}.to_json});".html_safe } %>
 </div>

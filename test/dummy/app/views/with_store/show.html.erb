@@ -1,7 +1,7 @@
 <div id='test-component'>
-  <%= react_component component_name: 'TodoList',
-                      props: { todos: @todos },
-                      store_update_calls: "ReactStores.fooStore.updateWith(#{{a: 123}.to_json});".html_safe %>
+  <%= react_component 'TodoList',
+                      { todos: @todos },
+                      { store_init_js: "ReactStores.fooStore.updateWith(#{{a: 123}.to_json});".html_safe } %>
 </div>
 <% if params[:ajax] %>
   <div id='theUrlDiv'><%= params[:ajax] %></div>
