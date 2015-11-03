@@ -14,43 +14,44 @@ module React
       # are used by react_ujs to actually instantiate the React component
       # on the client.
       #
-      # If passing in the need to update a store, or if an XHR request,
-      # we render additional JavaScript
-      def react_component(component_name:, props: {}, options: {}, store_update_calls: "", &block)
-        if store_update_calls.present? && !store_update_calls.html_safe?
-          raise ArgumentError
+      # This forked version supports an additional option, :store_init_js
+      #
+      # options[:store_init_js]
+      #  A string of html_safe javascript that will be included both in
+      #  a server-side render and in the browser. It should initialize any
+      #  stores upon which this component depends.
+      def react_component(name, props={}, options={}, &block)
+        options = {:tag => options} if options.is_a?(Symbol)
+        store_init_js = options.delete(:store_init_js)
+        if store_init_js.present? && !store_init_js.html_safe?
+          raise ArgumentError("options[:store_init_js] must be marked html_safe")
         end
         initialization_js_tags = ''.html_safe
-        if store_update_calls.present? || (request && request.xhr?)
+        if store_init_js.present? || (request && request.xhr?)
           initialization_js_tags = init_js_tags(
-                                      component_name: component_name,
+                                      name: name,
                                       props: props,
                                       options: options,
-                                      store_update_calls: store_update_calls)
+                                      store_init_js: store_init_js)
         end
-        options = {:tag => options} if options.is_a?(Symbol)
-        block = Proc.new{concat React::Renderer.render(component_name, props)} if options[:prerender]
+        block = Proc.new{concat React::Renderer.render(name, props)} if options[:prerender]
 
         html_options = options.reverse_merge(:data => {})
         html_options[:data].tap do |data|
-          data[:react_class] = component_name
+          data[:react_class] = name
           data[:react_props] = React::Renderer.react_props(props) unless props.empty?
         end
         html_tag = html_options[:tag] || :div
 
         # remove internally used properties so they aren't rendered to DOM
-        html_options.except!(:tag, :prerender)
+        html_options.except!(:tag, :prerender, :store_init_js)
 
         initialization_js_tags + content_tag(html_tag, '', html_options, &block)
       end
 
       private
 
-      #
-      def init_js_tags(component_name:, props: {}, options: {}, store_update_calls: "")
-        if store_update_calls.present? && !store_update_calls.html_safe?
-          raise ArgumentError
-        end
+      def init_js_tags(name:, props:, options:, store_init_js:)
         js_tag_rendering_component = ''.html_safe
         js_tag_updating_store = ''.html_safe
         rand_id = "react#{rand(100000000)}"
@@ -60,7 +61,7 @@ module React
         # the component when the request is returned to the client.
         if request.xhr?
           js_rendering_component = <<-END
-            React.render(React.createElement(eval.call(window, "#{component_name}"),
+            React.render(React.createElement(eval.call(window, "#{name}"),
                                                #{props.to_json}),
                                                document.getElementById("#{rand_id}"));
           END
@@ -75,11 +76,11 @@ module React
         # Generate javascript to update stores with data provided
         if options[:prerender]
           js_tag_updating_store = react_javascript do
-            store_update_calls
+            store_init_js
           end
         else
           js_tag_updating_store = javascript_tag do
-            store_update_calls
+            store_init_js
           end
         end
 
