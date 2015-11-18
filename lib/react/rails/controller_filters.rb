@@ -4,11 +4,15 @@ module React
       extend ::ActiveSupport::Concern
 
       included do
-        append_after_filter :reset_react_javascript_context
+        around_action :with_resetting_react_javascript_context
       end
 
-      def reset_react_javascript_context
-        ::React::Renderer.reset!
+      def with_resetting_react_javascript_context
+        begin
+          yield
+        ensure
+          ::React::Renderer.reset!
+        end
       end
 
     end
