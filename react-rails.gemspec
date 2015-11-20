@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'coffee-script-source', '~>1.8'
   s.add_dependency 'connection_pool'
   s.add_dependency 'execjs'
-  s.add_dependency 'rails', '>= 3.1'
+  s.add_dependency 'rails', '>= 4.0'
   # If you change this, make sure to update VERSIONS.md:
   s.add_dependency 'react-source', '~> 0.13'
 
