@@ -11,6 +11,7 @@ module React
       config.react.jsx_transformer_class = nil # defaults to BabelTransformer
       config.react.camelize_props = false # pass in an underscored hash but get a camelized hash
       config.react.sprockets_strategy = nil # how to attach JSX to the asset pipeline (or `false` for none)
+      config.react.bust_cache = true # if true will change the sprockets version based on this gem
 
       # Server rendering:
       config.react.server_renderer_pool_size  = 1   # increase if you're on JRuby
@@ -61,7 +62,7 @@ module React
         })
 
         sprockets_env = app.assets || app.config.try(:assets) # sprockets-rails 3.x attaches this at a different config
-        if !sprockets_env.nil?
+        if !sprockets_env.nil? && app.config.react.bust_cache
           sprockets_env.version = [sprockets_env.version, "react-#{asset_variant.react_build}",].compact.join('-')
         end
 
